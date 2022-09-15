@@ -12,6 +12,7 @@ plt.rc('font', size=12)
 plt.rc('lines', lw=1)
 plt.rc('lines', mew=1.4)
 plt.rc('lines', markersize=6)
+pd.set_option('mode.chained_assignment', None)
 
 
 colors12 = {
@@ -229,7 +230,6 @@ def sweepmain(): # about the L sweep in section IV.B. Produces figure 3.
     df, qubit_res, qures, qures2, starts, allpeas = extract_df(name)
     # find_modes_wrapper(name, qures2, allpeas)
     new_df, modes = cleandf(name, df, starts, qubit_res)
-    
     common_modes = [mode for mode in modes if mode in deltaB.keys() or mode == 'q']
 
     new_df = adjust_p(new_df, df, metadata["L"], common_modes, True, deltaB)

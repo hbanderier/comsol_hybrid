@@ -95,12 +95,14 @@ def adjust_p(new_df, df, Ls, modes, selfchi=False, deltas=None):
     phi0 = co.h / 2 / co.e
     factor = 1
     EJoverh = 1 / co.h / new_df.index * (phi0 / 2 / co.pi) ** 2  # [Hz]
-    modes_to_change = modes
-    # modes_to_change = [modes[0], modes[-1]]
+    # modes_to_change = []
+    modes_to_change = [modes[0], modes[-1]]    
+    # modes_to_change = modes
     for L in Ls:
         if L < 1e-7:
             L = np.round(L * 1e9, 4) 
         here = df[df['L'] == L]
+        here.loc[:, 'p'] /= here['p'].sum()
         for mode in modes:
             here.loc[:, mode] = np.abs(here['f'] - new_df.loc[L, 'f' + mode])
         here.loc[:, 'closest'] = here.loc[:, modes].idxmin(axis=1)

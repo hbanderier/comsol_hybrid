@@ -1,17 +1,18 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import pickle as pk
-from pns_v3 import extract_df
-from util import realconv
+from util import realconv, loadmda, savemda, filepath
 plt.rc('font', size=12)
 plt.rc('lines', lw=1.5)
 
-def extract_profile(name, here):
-    path = './data/' + name + '/'
-    if isinstance(here, list):
-        metadata = pk.load(open(path + 'metadata.pkl', 'rb'))
-        mindist_all = metadata['mindist_all_z']
-        here = mindist_all[here[0]][here[1]][here[2]]
+def extract_profile(name, filter=None):
+    path = filepath(name)
+    if filter is not None:
+        metadata = loadmda(name)
+        mindist_all = metadata["mindist_all_z"][filter]
+        here = mindist_all["LG00L"]
+    else:
+        here = 0
     profile = np.loadtxt(path + 'profile.csv', delimiter=',', comments='%', usecols=[0, here + 1], converters={here + 1 : realconv})
     ind = np.argsort(profile[:, 0])
     profile[:, 1] = np.abs(profile[:, 1])
@@ -20,9 +21,9 @@ def extract_profile(name, here):
     return profile[ind, :]
 
 if __name__ == "__main__":
-    prof_SM = extract_profile('SM', here=2)
-    prof_1 = extract_profile('p3', here=1)
-    prof_2 = extract_profile('p3', here=[-1, 0, 0])
+    prof_SM = extract_profile('SM', 0)
+    prof_1 = extract_profile('disp_mech')
+    prof_2 = extract_profile('disp_qubit')
 
     n = prof_SM.shape[0]
     x = prof_SM[:, 0]
@@ -36,9 +37,9 @@ if __name__ == "__main__":
     x1, x2, y1, y2 = -100, -30, -0.002, 0.015
 
     pouets = [prof_SM, prof_1, prof_2]
-    labels = ['Bare (0, 0)', 'Hybrid Qubit', 'Hybrid (0, 0)']
+    labels = ['Bare (0, 0)', 'Hybrid (0, 0)', 'Hybrid Qubit']
     colors = ['k-', 'b-', 'g-']
-    for i in range(3):
+    for i in [0, 2]:
         pouet = pouets[i]
         ax1.plot(pouet[:, 0], pouet[:, 1], colors[i], label=labels[i])
         ind = np.logical_and(pouet[:, 0] >= x1, pouet[:, 0] <= x2)

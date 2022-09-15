@@ -90,8 +90,6 @@ def plot_compare(Zref, Z, L, f):
 
 
 def find_modes(L, freqs, data, look_for, qures, peas):
-    print(f"L={L*1e9:.3f}")
-    print("qures : ", qures)
     N = 300
     X, Y = np.meshgrid(np.linspace(9e-4, 11e-4, N), np.linspace(0, 1e-4, N))
 
@@ -103,57 +101,39 @@ def find_modes(L, freqs, data, look_for, qures, peas):
     
     q = 49
     _, _, w0t, _ = sapphire(q)
-    upper = 0.7
-    lower = 0.5
-    how_many = 10
-    w02 = np.linspace(lower * w0t, upper * w0t, how_many)** 2
+    w02ref = (0.6 * w0t) ** 2
 
     Xc = 1e-3
     r = np.sqrt((X - Xc) ** 2 + Y ** 2)
     phi = np.arctan2((X - Xc), Y) + np.pi / 2
 
     indices = {}
-
-    rho = np.tensordot(2 * r * r, 1 / w02, axes=0)
-    Zref = genlaguerre(0, 0)(rho) * np.exp(-rho/2)
-    norm = np.tensordot(np.ones(Zref.shape[:2]), np.nanmax(np.abs(Zref), axis=(0, 1)), axes=0)
-    Zref = np.tensordot(Zref / norm, np.ones(Z.shape[-1]), axes=0)
-    mod_Z = np.tensordot(np.abs(Z), np.ones(how_many), axes=0)
-    mod_Z = np.moveaxis(mod_Z, (2, 3), (3, 2))
-
-    distances = np.nansum(np.nansum((mod_Z - np.abs(Zref)) ** 2, axis=0), axis=0)
-    asort = np.argsort(distances.flatten())
-    coords = np.unravel_index(asort[0], distances.shape)
-    i = 0
-    if coords[1] == qures:
-        coords = list(coords)
-        coords[1] = np.argsort(peas)[-2]
-        coords = tuple(coords)
-
-
-    print('Found', coords)
-    w02ref = w02[coords[0]]
     rho = 2 * r * r / w02ref
     Xp = np.sqrt(2 / w02ref) * (X - Xc)
     Yp = np.sqrt(2 / w02ref) * Y
     variables = [rho, phi, Xp, Yp]
-    indices["LG00"] = coords[1]
-    # fig = plot_compare(Zref[:, :, coords[0], coords[1]], Z[:, :, indices["LG00"]], L, freqs[indices["LG00"]])
 
     for key, f0 in look_for.items():
-        if key == "LG00":
-            continue
         # print(key)
-        loweri = np.argmin(np.abs(freqs - f0 * 1e9)) - 3
-        upperi = np.argmin(np.abs(freqs - f0 * 1e9)) + 3
+        around = np.argmin(np.abs(freqs - f0 * 1e9)) 
+        if around >= qures:
+            loweri = around
+            upperi = around + 10
+        else:
+            loweri = around - 3
+            upperi = around + 2
         LG = key[:2] == "LG"
         Zref = create_Zref(LG, int(key[2]), int(key[3]), variables)
         distances = compute_dist(Z[:, :, loweri:upperi], Zref)
         mindists = loweri + np.argsort(distances)
 
         indices[key], failstate = decide(mindists, indices, qures, peas, freqs)
-        # fig = plot_compare(Zref, Z[:, :, indices[key]], L, freqs[indices[key]])
-
+    
+        if L * 1e9 > 9.06 and key == "LG00":
+            print(f"L={L*1e9:.3f}")
+            print("qures : ", qures)    
+            print(indices)
+            print(around, upperi, loweri)    
     return indices
 
 
@@ -196,7 +176,7 @@ def find_modes_wrapper(name, qures, allpeas):
     counter = 0
     for i in range(numL):
         thisnumf = int(np.sum(freqs[i, :] != 0))
-        cols = [2 + counter + j for j in range(thisnumf)]
+        cols = [2 + i * numf + j for j in range(thisnumf)]
         counter += thisnumf
         cols = np.append([0, 1], cols)
         converters = {j : realconv for j in cols}
