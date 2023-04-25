@@ -51,7 +51,7 @@ def extract_freqs(javaobj, model, sol, and_l=False):
             counter = counter + howmany
         freqs1 = freqs2
     elif and_l:
-        L = np.array([float(model.parameter('L_junc')[:-4])]) * 1e-9
+        L = np.array([float(model.parameter('L_junc')[:-6])]) * 1e-9
         freqs1 = -np.array(info1.getValsImag(0, [])).reshape(1, -1) / 2 / np.pi
     else:
         freqs1 = -np.array(info1.getValsImag(0, [])).reshape(1, -1) / 2 / np.pi

@@ -118,10 +118,13 @@ def find_modes(L, freqs, data, look_for, qures, peas):
         around = np.argmin(np.abs(freqs - f0 * 1e9)) 
         if around >= qures:
             loweri = around
-            upperi = around + 10
+            upperi = min(len(freqs) - 1, around + 10)
+            if key[2:4] == '00':
+                indices[key] = np.argsort(peas)[-2]
+                continue
         else:
-            loweri = around - 3
-            upperi = around + 2
+            loweri = max(0, around - 3)
+            upperi = min(len(freqs) - 1, around + 2)
         LG = key[:2] == "LG"
         Zref = create_Zref(LG, int(key[2]), int(key[3]), variables)
         distances = compute_dist(Z[:, :, loweri:upperi], Zref)
@@ -129,11 +132,10 @@ def find_modes(L, freqs, data, look_for, qures, peas):
 
         indices[key], failstate = decide(mindists, indices, qures, peas, freqs)
     
-        if L * 1e9 > 9.06 and key == "LG00":
-            print(f"L={L*1e9:.3f}")
-            print("qures : ", qures)    
-            print(indices)
-            print(around, upperi, loweri)    
+    print(f"L={L*1e9:.3f}")
+    print("qures : ", qures)    
+    print(indices)
+    print(around, upperi, loweri)    
     return indices
 
 
